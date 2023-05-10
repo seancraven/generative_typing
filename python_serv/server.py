@@ -29,8 +29,9 @@ class Server:
 
     @log_time
     def __init__(self):
-        self.host = os.environ["HOST"]
-        self.port = os.environ["IPV4"]
+        self.host = os.environ.get("HOST")
+        self.port = os.environ.get("IPV4")
+        print(self.host, self.port)
 
     @log_time
     def send_response(self, conn: socket.SocketType):
