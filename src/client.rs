@@ -57,7 +57,9 @@ mod client_test {
         reader
             .lines()
             .map(|line| line.expect("Failed to read line"))
-            .for_each(|line| {
+            .enumerate()
+            .for_each(|(idx, line)| {
+                println!("Iteration: {}", idx);
                 println!("{}", line);
             });
     }
