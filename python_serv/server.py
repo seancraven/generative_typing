@@ -62,11 +62,6 @@ class FakeGenerator:
             for line in f:
                 yield line
 
-    def poll_response(self) -> str:
-        """Generate a response."""
-        sleep(2)
-        return "Some prompt"
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
