@@ -1,4 +1,8 @@
-# Type-RS
-Type-RS is a small command line tool that lets you do typing practice from the command line. This is the basic foundation for a larger project which uses a generative model, to help increase typing speed with code.
+## The server test worktree goals.
 
-In the current state you can run main rs with a file as an argument, and the program will allow you to practice your typing.
+ - [ ] Get the server to send a prewritten block of text chunk by chunk.
+    - [ ] Start up the server
+    - [ ] Listen for client to send to
+    - [ ] Send Content piece by piece.
+ - [ ] Get the client to recieve a blocks and make them typable in realtime
+
