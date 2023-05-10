@@ -1,7 +1,9 @@
 import logging
+import os
 import socket
 from functools import wraps
-from time import sleep, time
+from time import sleep
+from time import time
 from typing import Generator
 
 
@@ -27,8 +29,8 @@ class Server:
 
     @log_time
     def __init__(self):
-        self.host = "127.0.0.1"
-        self.port = 5087
+        self.host = os.environ["HOST"]
+        self.port = os.environ["IPV4"]
 
     @log_time
     def send_response(self, conn: socket.SocketType):
@@ -60,6 +62,7 @@ class FakeGenerator:
     def __iter__(self) -> Generator[str, None, None]:
         with open(self.file) as f:
             for line in f:
+                sleep(0.1)
                 yield line
 
 
