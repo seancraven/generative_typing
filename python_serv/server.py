@@ -5,12 +5,6 @@ from time import sleep
 from time import time
 from typing import Generator
 
-import torch
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
-from transformers import BloomForCausalLM
-from transformers import BloomTokenizerFast
-
 
 def log_time(
     func,
@@ -34,13 +28,6 @@ class Server:
 
     @log_time
     def __init__(self):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.tokenizer = AutoTokenizer.from_pretrained("bigscience/bloom-560m")
-        self.model = AutoModelForCausalLM.from_pretrained("bigscience/bloom-560m").to(
-            device
-        )
-
         self.logger = logging.getLogger()
         self.host = "127.0.0.1"
         self.port = 5087
@@ -83,43 +70,6 @@ class FakeGenerator:
         """Generate a response."""
         sleep(2)
         return "Some prompt"
-
-
-class WordGenerator:
-    """Prompts take too long to generate a block of text for a fast and responsive app.
-
-    The generator generates a small snippet of text, at a time and uses this as the next,
-    prompt."""
-
-    def __init__(
-        self, model: BloomForCausalLM, tokenizer: BloomTokenizerFast, prompt, **kwargs
-    ):
-        self.model = model
-        self.tokenizer = tokenizer
-        self.prompt = prompt
-        self.verbosity = kwargs.get("verbosity", 0)
-        self.prompt_len = len(self.prompt)
-
-    @log_time
-    def __iter__(self):
-        while True:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-
-            tokens: torch.Tensor = self.tokenizer.encode(
-                self.prompt, return_tensors="pt"
-            ).to(device)
-            result_len = tokens.shape[1] + 50
-            response = self.tokenizer.decode(
-                self.model.generate(
-                    tokens,
-                    max_length=result_len,
-                    num_beams=3,
-                    no_repeat_ngram_size=3,
-                    early_stopping=True,
-                )[0]
-            )
-            self.prompt = response[-self.prompt_len :]
-            yield response[-50:]
 
 
 if __name__ == "__main__":
