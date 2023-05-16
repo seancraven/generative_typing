@@ -6,6 +6,8 @@ from time import sleep
 from time import time
 from typing import Generator
 
+from dotenv import load_dotenv
+
 
 def log_time(
     func,
@@ -29,9 +31,9 @@ class Server:
 
     @log_time
     def __init__(self):
-        self.host = os.environ.get("HOST")
-        self.port = os.environ.get("IPV4")
-        print(self.host, self.port)
+        load_dotenv()
+        self.host = os.environ["HOST"]
+        self.port = int(os.environ["PORT"])
 
     @log_time
     def send_response(self, conn: socket.SocketType):
@@ -58,7 +60,7 @@ class FakeGenerator:
     """Debugging generator, that returns a prompt, after a fixed amount of time."""
 
     def __init__(self):
-        self.file = "test.py"
+        self.file = "./python_serv/server.py"
 
     def __iter__(self) -> Generator[str, None, None]:
         with open(self.file) as f:

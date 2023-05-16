@@ -1,7 +1,9 @@
 use chrono::Local;
 mod client;
+use client::TypeClient;
 use console::{style, Key, Term};
 use core::fmt;
+use dotenv::dotenv;
 use std::cell::RefCell;
 use std::collections::LinkedList;
 use std::error::Error;
@@ -14,6 +16,63 @@ use std::str::Chars;
 use clap::Parser;
 
 fn main() -> Result<(), LineError> {
+    dotenv().ok();
+    let args = Args::parse();
+    let term = Term::stdout();
+    let start_time = Local::now();
+    term.write_line("Press any key to start")?;
+    term.read_key()?;
+    let mut errors = 0;
+    let mut total = 0;
+    let mut len = 0;
+    let window_stream = TypeClient::new_from_env()
+        .expect("Failed to start due to lack of local .env variables")
+        .start_gen()
+        .expect("Failed to connect to typing server");
+    let buf = BufReader::new(window_stream);
+    for line_to_type in buf.lines() {
+        //
+        let gen_line = line_to_type.expect("Failed to read line");
+        term.clear_screen()?;
+        term.write_line(&gen_line)?;
+        //
+        let line_resp = type_line(&gen_line, &term, args.lines);
+        //
+        match line_resp {
+            Ok(a) => {
+                errors += a.errors;
+                total += a.total_input_chars;
+                len += a.line_length;
+            }
+            Err(le) => match le {
+                LineError::Io(io) => {
+                    return Err(LineError::Io(io));
+                }
+                LineError::Esc(a) => {
+                    errors += a.errors;
+                    total += a.total_input_chars;
+                    len += a.line_length;
+                    break;
+                }
+            },
+        }
+    }
+    let duration = (Local::now() - start_time).num_seconds() as f64 / 60.0; // time in minuites
+
+    if total != 0 {
+        term.clear_screen()?;
+        term.write_line(&format!("{} errors made.", errors))?;
+        term.write_line(&format!(
+            "{:.0}% Accuracy.",
+            ((1.0 - (errors as f64 / total as f64)) * 100.0).max(0.0)
+        ))?;
+        term.write_line(&format!("{:.0} WPM.", (len as f64 / (5.0 * duration))))?;
+        term.write_line(&format!("{} excess characters.", total as i64 - len as i64))?;
+    }
+    return Ok(());
+}
+
+fn _main() -> Result<(), LineError> {
     let args = Args::parse();
     let term = Term::stdout();
     let file = File::open(args.file_name)?;
@@ -24,7 +83,7 @@ fn main() -> Result<(), LineError> {
     let mut errors = 0;
     let mut total = 0;
     let mut len = 0;
-    let window_gen = FileLinesGenerator::new(file, args.lines).into_iter();
+    let window_gen = LinesGenerator::new(file, args.lines).into_iter();
 
     for window in window_gen {
         let line_to_type = window.iter().next().unwrap();
@@ -120,7 +179,7 @@ impl Error for LineError {
         }
     }
 }
-fn type_line(line: &String, term: &Term, window_size: usize) -> Result<Analytics, LineError> {
+fn type_line(line: &str, term: &Term, window_size: usize) -> Result<Analytics, LineError> {
     term.move_cursor_up(window_size + 1)?;
     let mut line_iter = line.chars().skip(0);
     let analytics = RefCell::new(Analytics::new(0, 0, 0));
@@ -189,7 +248,7 @@ fn type_line(line: &String, term: &Term, window_size: usize) -> Result<Analytics
 fn backspace<'a>(
     term: &'a Term,
     analytics: &RefCell<Analytics>,
-    line: &'a String,
+    line: &'a str,
 ) -> Result<Skip<Chars<'a>>, io::Error> {
     if analytics.borrow_mut().line_length > 0 {
         term.move_cursor_left(1)?;
@@ -252,12 +311,12 @@ impl Input {
 
 /// Generates a window of lines from a file.
 #[derive(Debug)]
-struct FileLinesGenerator {
+struct LinesGenerator {
     //
     current_window: LinkedList<String>,
-    lines_iter: Lines<BufReader<File>>,
+    lines_iter: impl BufRead,
 }
-impl FileLinesGenerator {
+impl LinesGenerator {
     /// Create a new FileLinesGenerator. With the first window
     /// populate.
     ///
@@ -267,8 +326,8 @@ impl FileLinesGenerator {
     ///
     /// # Returns
     /// * `FileLinesGenerator` - Struct to read lines from file
-    fn new(file: File, window_size: usize) -> Self {
-        let mut lines_iter = BufReader::new(file).lines();
+    fn new(reader: impl BufRead, window_size: usize) -> Self {
+        let mut lines_iter = reader.lines();
         let mut current_window = LinkedList::new();
         current_window.push_front("".to_string());
         for _ in 0..window_size {
@@ -287,7 +346,7 @@ impl FileLinesGenerator {
         };
     }
 }
-impl Iterator for FileLinesGenerator {
+impl Iterator for LinesGenerator {
     type Item = LinkedList<String>;
     fn next(&mut self) -> Option<Self::Item> {
         // returns slice of current_chunk.
