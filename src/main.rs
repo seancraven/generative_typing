@@ -1,5 +1,3 @@
-/// Find a way to get the generics to work. Important part of
-/// my rusty learning.
 use chrono::Local;
 mod client;
 use client::TypeClient;
@@ -9,7 +7,7 @@ use dotenv::dotenv;
 use std::cell::RefCell;
 use std::collections::LinkedList;
 use std::error::Error;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Lines};
 use std::iter::Skip;
 use std::path::PathBuf;
 use std::str::Chars;
@@ -262,12 +260,13 @@ impl Input {
 
 /// Generates a window of lines from a file.
 #[derive(Debug)]
-struct LinesGenerator<T> {
-    //
+struct LinesGenerator<T: Sized + BufRead> {
+    // Light generic to allow for different types of readers.
     current_window: LinkedList<String>,
-    lines_iter: T,
+    lines_iter: Lines<T>,
 }
-impl<T> LinesGenerator<T> {
+
+impl<T: Sized + BufRead> LinesGenerator<T> {
     /// Create a new FileLinesGenerator. With the first window
     /// populate.
     ///
@@ -277,7 +276,7 @@ impl<T> LinesGenerator<T> {
     ///
     /// # Returns
     /// * `FileLinesGenerator` - Struct to read lines from file
-    fn new(reader: impl BufRead, window_size: usize) -> Self {
+    fn new(reader: T, window_size: usize) -> Self {
         let mut lines_iter = reader.lines();
         let mut current_window = LinkedList::new();
         current_window.push_front("".to_string());
@@ -297,7 +296,7 @@ impl<T> LinesGenerator<T> {
         };
     }
 }
-impl Iterator for LinesGenerator {
+impl<T: Sized + BufRead> Iterator for LinesGenerator<T> {
     type Item = LinkedList<String>;
     fn next(&mut self) -> Option<Self::Item> {
         // returns slice of current_chunk.
