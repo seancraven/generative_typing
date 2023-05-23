@@ -29,6 +29,7 @@ impl TypeClient {
         self.host_ip.address(self.port.clone())
     }
     /// Client starts, forms a connection and then returns an iterator over the response.
+    /// The current design doesn't make sense that you return a stream and leak this.
     pub fn start_gen(&self) -> Result<TcpStream, io::Error> {
         let address = self.address();
         println!("Connecting to {}", address);
@@ -40,6 +41,13 @@ impl TypeClient {
         let ip = IPV4::new(std::env::var("HOST")?);
         let port = std::env::var("PORT")?;
         Ok(TypeClient::new(ip, port))
+    }
+    pub fn close(&self) -> Result<(), io::Error> {
+        let address = self.address();
+        println!("Closing connection to {}", address);
+        let mut stream = TcpStream::connect(&address)?;
+        stream.write_all("close".as_bytes())?;
+        Ok(())
     }
 }
 

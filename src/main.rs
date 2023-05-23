@@ -25,11 +25,12 @@ fn main() -> Result<(), LineError> {
     let mut total = 0;
     let mut len = 0;
     // Currently only one line is displayed,
-    let window_stream = TypeClient::new_from_env()
-        .expect("Failed to start due to lack of local .env variables")
+    let typeclient =
+        TypeClient::new_from_env().expect("Failed to start due to lack of local .env variables");
+    let window_stream = typeclient
         .start_gen()
         .expect("Failed to connect to typing server");
-    let buf = BufReader::new(window_stream);
+    let buf = BufReader::new(&window_stream);
     let window_gen = LinesGenerator::new(buf, args.lines).into_iter();
     for window in window_gen {
         //
@@ -64,8 +65,11 @@ fn main() -> Result<(), LineError> {
             },
         }
     }
+
     let duration = (Local::now() - start_time).num_seconds() as f64 / 60.0; // time in minuites
 
+    // handle the end of the stream.
+    window_stream.shutdown(std::net::Shutdown::Both)?;
     if total != 0 {
         term.clear_screen()?;
         term.write_line(&format!("{} errors made.", errors))?;

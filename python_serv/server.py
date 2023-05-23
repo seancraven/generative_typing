@@ -43,17 +43,24 @@ class Server:
             conn.sendall(resp.encode())
 
     def listen(self):
-        """Connect to a client, and send typing prompt"""
+        """Connect to a client, and send typing prompt.
+        Only handels sequential connections."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
             soc.bind((self.host, self.port))
             soc.listen()
             connection, _ = soc.accept()
-            logging.info("Listening for connection on %s:%s", self.host, self.port)
-            with connection as conn:
-                # 4096 is the number of bites recived
-                data = conn.recv(4096)
-                logging.info(data.decode())
-                self.send_response(conn)
+            while True:
+                logging.info("Listening for connection on %s:%s", self.host, self.port)
+                with connection as conn:
+                    # 4096 is the number of bites recived
+                    data = conn.recv(4096)
+                    logging.info(data.decode())
+                    try:
+                        self.send_response(conn)
+                    except BrokenPipeError:
+                        pass
+                    conn.close()
+                    logging.info("Connection on %s:%s closed", self.host, self.port)
 
 
 class FakeGenerator:
