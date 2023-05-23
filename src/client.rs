@@ -42,13 +42,6 @@ impl TypeClient {
         let port = std::env::var("PORT")?;
         Ok(TypeClient::new(ip, port))
     }
-    pub fn close(&self) -> Result<(), io::Error> {
-        let address = self.address();
-        println!("Closing connection to {}", address);
-        let mut stream = TcpStream::connect(&address)?;
-        stream.write_all("close".as_bytes())?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]

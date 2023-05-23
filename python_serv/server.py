@@ -48,8 +48,8 @@ class Server:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as soc:
             soc.bind((self.host, self.port))
             soc.listen()
-            connection, _ = soc.accept()
             while True:
+                connection, _ = soc.accept()
                 logging.info("Listening for connection on %s:%s", self.host, self.port)
                 with connection as conn:
                     # 4096 is the number of bites recived
