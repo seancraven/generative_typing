@@ -7,55 +7,7 @@ use std::io::{self, BufRead, Lines};
 use std::iter::Skip;
 use std::str::Chars;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Analytics {
-    pub errors: u64,
-    pub total_input_chars: u64,
-    pub line_length: u64,
-}
-impl Analytics {
-    pub fn new(errors: u64, total_input_chars: u64, line_length: u64) -> Analytics {
-        Analytics {
-            errors,
-            total_input_chars,
-            line_length,
-        }
-    }
-}
-
-/// Wrapper for io::Errror, and escape functionality.
-/// enables quick exit from typing. Raise this with the
-/// current data and handle this.
-#[derive(Debug)]
-pub enum LineError {
-    Io(io::Error),
-    Esc(Analytics), //(errors, total_entered, string_len)
-}
-impl From<io::Error> for LineError {
-    fn from(err: io::Error) -> LineError {
-        LineError::Io(err)
-    }
-}
-impl fmt::Display for LineError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            LineError::Io(e) => e.fmt(f),
-            LineError::Esc(a) => write!(
-                f,
-                "Escape with\nErrors: {}\nTotal:{}\nString Lenght{}",
-                a.errors, a.total_input_chars, a.line_length
-            ),
-        }
-    }
-}
-impl Error for LineError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match *self {
-            LineError::Esc(_) => None,
-            LineError::Io(ref e) => Some(e),
-        }
-    }
-}
+/// Function that handles the user input and displays the output to typed.
 pub fn type_line(line: &str, term: &Term, window_size: usize) -> Result<Analytics, LineError> {
     term.move_cursor_up(window_size + 1)?;
     let mut line_iter = line.chars().skip(0);
@@ -140,6 +92,7 @@ fn backspace<'a>(
 /// Returns 1 if error, else 0
 fn write_char(term: &Term, target_char: char, user_char: char) -> Result<u64, io::Error> {
     let mut error = 0;
+    // TODO: Add a ¬ character, to show return shouls have been pressed.
     if target_char == user_char {
         term.write_str(&format!("{}", style(user_char).green()))?;
     } else {
@@ -186,7 +139,8 @@ impl Input {
     }
 }
 
-/// Generates a window of lines from a file.
+/// Sliding window iterator over a buffer, returning a window of lines.
+///
 #[derive(Debug)]
 pub struct LinesGenerator<T: Sized + BufRead> {
     // Light generic to allow for different types of readers.
@@ -248,6 +202,55 @@ impl<T: Sized + BufRead> Iterator for LinesGenerator<T> {
                     return None;
                 }
             }
+        }
+    }
+}
+/// Struct to hold analytics about the user's performance.
+#[derive(Debug, Clone, Copy)]
+pub struct Analytics {
+    pub errors: u64,
+    pub total_input_chars: u64,
+    pub line_length: u64,
+}
+impl Analytics {
+    pub fn new(errors: u64, total_input_chars: u64, line_length: u64) -> Analytics {
+        Analytics {
+            errors,
+            total_input_chars,
+            line_length,
+        }
+    }
+}
+#[derive(Debug)]
+pub enum LineError {
+    Io(io::Error),
+    Esc(Analytics), //(errors, total_entered, string_len)
+}
+impl From<io::Error> for LineError {
+    fn from(err: io::Error) -> LineError {
+        LineError::Io(err)
+    }
+}
+impl fmt::Display for LineError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LineError::Io(e) => e.fmt(f),
+            LineError::Esc(a) => write!(
+                f,
+                "Escape with\nErrors: {}\nTotal:{}\nString Lenght{}",
+                a.errors, a.total_input_chars, a.line_length
+            ),
+        }
+    }
+}
+/// Wrapper for io::Errror, and escape functionality.
+/// enables quick exit from typing. Raise this with the
+/// current data and handle this.
+impl Error for LineError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match *self {
+            LineError::Esc(_) => None,
+            LineError::Io(ref e) => Some(e),
         }
     }
 }
