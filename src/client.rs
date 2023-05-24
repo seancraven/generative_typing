@@ -33,7 +33,7 @@ impl TypeClient {
         let address = self.address();
         println!("Connecting to {}", address);
         let mut stream = TcpStream::connect(&address)?;
-        stream.write_all("start".as_bytes())?;
+        stream.write_all("if __name__ == '__main__':".as_bytes())?;
         return Ok(stream);
     }
     pub fn new_from_env() -> Result<TypeClient, std::env::VarError> {
