@@ -7,21 +7,22 @@ use std::io::{self, BufRead, Lines};
 use std::iter::Skip;
 use std::str::Chars;
 
-fn first_non_space(line: &str, term: &Term) -> Result<usize, LineError> {
+fn first_non_space(line: &str) -> usize {
     for (i, char) in line.trim_end().chars().enumerate() {
         if char == ' ' {
-            term.move_cursor_right(1)?;
         } else {
-            return Ok(i);
+            return i;
         }
     }
-    return Ok(line.len());
+    return line.len();
 }
 
 /// Function that handles the user input and displays the output to typed.
 pub fn type_line(line: &str, term: &Term, window_size: usize) -> Result<Analytics, LineError> {
     term.move_cursor_up(window_size + 1)?;
-    let mut line_iter = line.trim_end().chars().skip(first_non_space(line, term)?);
+    let first_char = first_non_space(line);
+    term.move_cursor_right(first_char)?;
+    let mut line_iter = line.trim_end().chars().skip(first_char);
     let analytics = RefCell::new(Analytics::new(0, 0, 0));
 
     loop {
@@ -97,7 +98,7 @@ fn backspace<'a>(
     }
     Ok(line
         .chars()
-        .skip(analytics.borrow_mut().line_length as usize))
+        .skip(analytics.borrow_mut().line_length as usize + first_non_space(line)))
 }
 /// Writes a character to the terminal color coded for correctness.
 /// Returns 1 if error, else 0

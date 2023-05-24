@@ -29,11 +29,11 @@ impl TypeClient {
     }
     /// Client starts, forms a connection and then returns an iterator over the response.
     /// The current design doesn't make sense that you return a stream and leak this.
-    pub fn start_gen(&self) -> Result<TcpStream, io::Error> {
+    pub fn start_gen(&self, message: &str) -> Result<TcpStream, io::Error> {
         let address = self.address();
         println!("Connecting to {}", address);
         let mut stream = TcpStream::connect(&address)?;
-        stream.write_all("if __name__ == '__main__':".as_bytes())?;
+        stream.write_all(message.as_bytes())?;
         return Ok(stream);
     }
     pub fn new_from_env() -> Result<TypeClient, std::env::VarError> {
@@ -57,7 +57,7 @@ mod client_test {
         let ip = IPV4::new(var("IPV4").expect("Can't find .evn variable IPV4"));
         let port = var("PORT").expect("Can't find .evn variable IPV4");
         let client = TypeClient::new(ip, port);
-        let stream = client.start_gen().expect("Failed to connect to host");
+        let stream = client.start_gen("hi").expect("Failed to connect to host");
         let reader = BufReader::new(stream);
         reader
             .lines()

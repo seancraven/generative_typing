@@ -14,7 +14,6 @@ fn main() -> Result<(), LineError> {
     dotenv().ok();
     let args = Args::parse();
     let term = Term::stdout();
-    let start_time = Local::now();
     term.write_line("Press any key to start")?;
     term.read_key()?;
     let mut errors = 0;
@@ -24,10 +23,11 @@ fn main() -> Result<(), LineError> {
     let typeclient =
         TypeClient::new_from_env().expect("Failed to start due to lack of local .env variables");
     let window_stream = typeclient
-        .start_gen()
+        .start_gen("TODO: Prompt")
         .expect("Failed to connect to typing server");
     let buf = BufReader::new(&window_stream);
     let window_gen = LinesGenerator::new(buf, args.lines).into_iter();
+    let start_time = Local::now();
     for window in window_gen {
         //
         let line_to_type = window.iter().next().unwrap();
@@ -84,6 +84,6 @@ struct Args {
     #[arg(short, long, default_value = "simple.txt")]
     file_name: PathBuf,
 
-    #[arg(short, long, default_value = "3")]
+    #[arg(short, long, default_value = "10")]
     lines: usize,
 }
