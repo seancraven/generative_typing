@@ -1,3 +1,5 @@
+## LLM typing client
+When practicing my typing speed, especially in code based settings, the lack of varied and semantically correct typing apps irritatied me. So I am building one in Rust.
 ## The server test worktree goals.
 
  - [x] Get the server to send a prewritten block of text chunk by chunk.
