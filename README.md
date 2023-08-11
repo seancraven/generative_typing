@@ -9,5 +9,5 @@ The LLM is loaded onto gpu memory and acts as a server. When a client starts typ
 Examples of typing experience:
 ```![typing](./typing_demo.png)``` 
 
-```![typing2](./typing_demo2.png) 
+```![typing2](./typing_demo2.png)```
 
