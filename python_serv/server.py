@@ -41,8 +41,12 @@ class Server:
     @log_time
     def send_response(self, conn: socket.SocketType, prompt: str):
         """The server will send the prompt, as a response to the client."""
+        logging.info("test")
         self.response_generator.reset(prompt)
+        sent_resp = ""
         for resp in self.response_generator:
+            sent_resp += resp
+
             conn.sendall(resp.encode())
 
     def listen(self):
@@ -71,7 +75,7 @@ class ResponseGenerator:
     """Debugging generator, that returns a prompt, after a fixed amount of time."""
 
     def __init__(self):
-        self.file = "./python_serv/server.py"
+        self.file = "./python_serv/preamble.txt"
 
     def __iter__(self) -> Generator[str, None, None]:
         with open(self.file) as f:
@@ -85,6 +89,7 @@ class ResponseGenerator:
 
 class LLMGenerator(ResponseGenerator):
     def __init__(self, max_len: int = 1000):
+        super().__init__()
         self.llm = LLM()
         self.max_len = max_len
         self.prompt = None
@@ -94,17 +99,19 @@ class LLMGenerator(ResponseGenerator):
         response = self.llm.inference(self.prompt)
         response_to_send = response[len(self.prompt) :]
         prompt = response
-        sent_response = response_to_send
         while len(response) < self.max_len:
             yield response_to_send
             response = self.llm.inference(prompt)
             response_to_send = response[len(prompt) :]
-            sent_response += response_to_send
             prompt = response
 
-        logging.debug(sent_response)
-
     def reset(self, prompt: str):
+        with open(self.file, "r") as f:
+            _prompt = f.readlines()
+        _prompt[1] = prompt + "\n"
+        prompt = "".join(_prompt)
+        print(len(prompt))
+        print(prompt)
         self.prompt = prompt
 
 
