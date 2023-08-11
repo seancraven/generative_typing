@@ -113,7 +113,7 @@ class LLMGenerator(ResponseGenerator):
 
         _prompt[0] = _prompt[0].strip("\n")
         _prompt[0] += " " + (
-            topics_list[random.randint(0, len(topics_list))].strip("\n") + ".\n"
+            topics_list[random.randint(0, len(topics_list) - 1)].strip("\n") + ".\n"
         )
         prompt = "".join(_prompt)
         self.prompt = prompt

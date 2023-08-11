@@ -32,7 +32,7 @@ impl TypeClient {
     /// The current design doesn't make sense that you return a stream and leak this.
     pub fn start_gen(&self) -> Result<TcpStream, io::Error> {
         let address = self.address();
-        println!("Connecting to {}", address);
+        // println!("Connecting to {}", address);
         let mut stream = TcpStream::connect(&address)?;
         stream.write_all("start".as_bytes())?;
         return Ok(stream);

@@ -1,11 +1,13 @@
 ## LLM typing client
-When practicing my typing speed, especially in code based settings, the lack of varied and semantically correct typing apps irritatied me. So I am building one in Rust.
-## The server test worktree goals.
+When practising my typing speed, especially in code based settings, the lack of varied and semantically correct programming typing apps irritated me. So I built a typing app for practising my programming.
 
- - [x] Get the server to send a prewritten block of text chunk by chunk.
-    - [x] Start up the server
-    - [x] Listen for client to send to
-    - [x] Send Content piece by piece.
- - [x] Get the client to recieve a blocks and make them typable in realtime
- - [ ] Have server not crash when typing is finished and handle connection completion nicely.
+A LLM, BigScience Bloom, is used to generate random code blocks from a pre made prompt and is sent to the typing client.
+
+The LLM is loaded onto gpu memory and acts as a server. When a client starts typing, a pre-defined prompt with a random topic is used to generate text. 
+
+
+Examples of typing experience:
+```![typing](./typing_demo.png)``` 
+
+```![typing2](./typing_demo2.png) 
 
