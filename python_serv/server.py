@@ -1,6 +1,7 @@
 import logging
 import os
 import socket
+import random
 from functools import wraps
 from time import sleep
 from time import time
@@ -41,12 +42,10 @@ class Server:
     @log_time
     def send_response(self, conn: socket.SocketType, prompt: str):
         """The server will send the prompt, as a response to the client."""
-        logging.info("test")
         self.response_generator.reset(prompt)
         sent_resp = ""
         for resp in self.response_generator:
             sent_resp += resp
-
             conn.sendall(resp.encode())
 
     def listen(self):
@@ -91,6 +90,7 @@ class LLMGenerator(ResponseGenerator):
     def __init__(self, max_len: int = 1000):
         super().__init__()
         self.llm = LLM()
+        self.topics = "./python_serv/topics.txt"
         self.max_len = max_len
         self.prompt = None
 
@@ -108,11 +108,16 @@ class LLMGenerator(ResponseGenerator):
     def reset(self, prompt: str):
         with open(self.file, "r") as f:
             _prompt = f.readlines()
-        _prompt[1] = prompt + "\n"
+        with open(self.topics, "r") as f:
+            topics_list = f.readlines()
+
+        _prompt[0] = _prompt[0].strip("\n")
+        _prompt[0] += " " + (
+            topics_list[random.randint(0, len(topics_list))].strip("\n") + ".\n"
+        )
         prompt = "".join(_prompt)
-        print(len(prompt))
-        print(prompt)
         self.prompt = prompt
+        print(prompt)
 
 
 class LLM:
@@ -164,7 +169,7 @@ class LLM:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARNING)
     server = Server(LLMGenerator())
     logging.info("Server started")
     server.listen()

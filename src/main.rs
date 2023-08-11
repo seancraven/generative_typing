@@ -84,6 +84,6 @@ struct Args {
     #[arg(short, long, default_value = "simple.txt")]
     file_name: PathBuf,
 
-    #[arg(short, long, default_value = "3")]
+    #[arg(short, long, default_value = "5")]
     lines: usize,
 }
