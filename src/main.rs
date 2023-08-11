@@ -27,7 +27,7 @@ fn main() -> Result<(), LineError> {
         .start_gen()
         .expect("Failed to connect to typing server");
     let buf = BufReader::new(&window_stream);
-    let window_gen = LinesGenerator::new(buf, args.lines).into_iter();
+    let window_gen = LinesGenerator::new(buf, args.lines);
     for window in window_gen {
         //
         let line_to_type = window.iter().next().unwrap();
